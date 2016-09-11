@@ -304,8 +304,11 @@ BestGpu::~BestGpu()
 
     if (m_nvmlData)
     {
-        // TODO: Check for error code and throw if !std::uncaught_exception()
-        nvmlShutdown();
+        nvmlReturn_t r = nvmlShutdown();
+        if ((r != NVML_SUCCESS) && !std::uncaught_exception())
+        {
+            RuntimeError("BestGPU Destructor: failed to shut down NVML. \n");
+        }
     }
 }
 

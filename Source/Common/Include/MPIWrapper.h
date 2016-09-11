@@ -14,7 +14,7 @@
 #endif
 #pragma comment(lib, "msmpi.lib")
 
-
+#include <errno.h> 
 #include <string>
 #include <array>
 #include <vector>
@@ -163,13 +163,20 @@ public:
     ~MPIWrapper()
     {
         fprintf(stderr, "~MPIWrapper\n");
-        fflush(stderr);
-        // TODO: Check for error code and throw if !std::uncaught_exception()
 
         // Do not finalize in event of an exception since calling MPI_Finalize without
         // all pending communications being finished results in a hang
-        if (!std::uncaught_exception())
-            MPI_Finalize();
+        int rc = fflush(stderr);
+        if ((rc != 0) && !std::uncaught_exception())
+        {
+        #ifdef _WIN32
+            RuntimeError("MPIWrapper: Failed to flush stderr, %d", ::GetLastError());
+        #else
+            RuntimeError("MPIWrapper: Failed to flush stderr, %d", errno);
+        #endif
+        }
+
+        MPI_Finalize();
     }
 
 private:
