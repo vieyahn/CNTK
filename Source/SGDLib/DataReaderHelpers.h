@@ -89,8 +89,22 @@ namespace Microsoft { namespace MSR { namespace CNTK {
                 // TODO: This must be a runtime check, not an assert().
                 UNUSED(iter);
             }
-        
-            DecimateMinibatchInPlace<ElemType>(inputMatrices, mpi->NumNodesInUse(), mpi->CurrentNodeRank(), pMBLayout);
+
+            try
+            {
+                DecimateMinibatchInPlace<ElemType>(inputMatrices, mpi->NumNodesInUse(), mpi->CurrentNodeRank(), pMBLayout);
+            }
+            catch (const std::exception& e)
+            {
+                if (trainSetDataReader.SupportsDistributedMBRead() && !useDistributedMBReading)
+                {
+                    fprintf(stderr, "\n DecimateMinibatch raised an exception: '%s'\n", e.what());
+                    fprintf(stderr, "\n To prevent this, please enable distributed reading "
+                                    "(set 'distributedMBReading' to 'true' in the ParallelTrain section).\n");
+
+                }
+                throw;
+            }
         }
 
 #if 0   // merge leftover?
