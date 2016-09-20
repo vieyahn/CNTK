@@ -1,0 +1,114 @@
+# Simple CIFAR-10 convnet, without and with BatchNormalization.
+
+command = TrainConvNet:Eval
+
+precision = "float"; traceLevel = 1 ; deviceId = "auto"
+
+rootDir = "../.." ; dataDir = "$rootDir$/DataSets/CIFAR10" ;
+outputDir = "./Output" ;
+
+modelPath = "$outputDir$/Models/ConvNet_CIFAR10_DataAug"
+#stderr = "$outputDir$/ConvNet_CIFAR10_DataAug_bs_out"
+
+TrainConvNet = {
+    action = "train"
+
+    BrainScriptNetworkBuilder = {
+        imageShape = 32:32:3
+        labelDim = 10
+
+		featMean = 128
+        featScale = 1/256
+        Normalize{m,f} = x => Constant(f) .* (x - Constant(m))
+
+        model = Sequential (
+            Normalize {featMean, featScale} :
+            ConvolutionalLayer {64, (3:3), pad = true} : ReLU : 
+            ConvolutionalLayer {64, (3:3), pad = true} : ReLU : 
+              MaxPoolingLayer {(3:3), stride = (2:2)} :
+            ConvolutionalLayer {64, (3:3), pad = true} : ReLU : 
+            ConvolutionalLayer {64, (3:3), pad = true} : ReLU : 
+              MaxPoolingLayer {(3:3), stride = (2:2)} :
+            DenseLayer {256} : Dropout : ReLU : 
+            DenseLayer {128} : Dropout : ReLU : 
+            LinearLayer {labelDim}
+        )
+
+        # inputs
+        features = Input {imageShape}
+        labels   = Input {labelDim}
+
+        # apply model to features
+        z = model (features)
+
+        # connect to system
+        ce       = CrossEntropyWithSoftmax     (labels, z)
+        errs     = ClassificationError         (labels, z)
+        top5Errs = ClassificationError         (labels, z, topN=5)  # only used in Eval action
+
+        featureNodes    = (features)
+        labelNodes      = (labels)
+        criterionNodes  = (ce)
+        evaluationNodes = (errs)  # top5Errs only used in Eval
+        outputNodes     = (z)
+    }
+
+    SGD = {
+        epochSize = 0
+        minibatchSize = 64
+
+        learningRatesPerSample = 0.0015625*20:0.00046875*20:0.00015625*20:0.000046875*10:0.000015625
+        momentumAsTimeConstant = 0*20:600*20:6400
+        maxEpochs = 80
+        L2RegWeight = 0.002
+        dropoutRate = 0*5:0.5
+
+        numMBsToShowResult = 100
+    }
+
+    reader = {
+        readerType = "ImageReader"
+        file = "$dataDir$/train_map.txt"
+        randomize = "auto"
+        features = {
+            width = 32
+            height = 32
+            channels = 3
+            cropType = "random"
+            cropRatio = 0.8
+            jitterType = "uniRatio"
+            interpolations = "linear"
+            meanFile = "$dataDir$/CIFAR10_mean.xml"
+        }
+        labels = {
+            labelDim = 10
+        }
+    }    
+}
+
+# Eval action
+Eval = {
+    action = "eval"
+    evalNodeNames = errs:top5Errs  # also test top-5 error rate
+    # Set minibatch size for testing.
+    minibatchSize = 512
+
+    reader = {
+        readerType = "ImageReader"
+        file = "$dataDir$/test_map.txt"
+        randomize = "none"
+        features = {
+            width = 32
+            height = 32
+            channels = 3
+            cropType = "center"
+            cropRatio = 1
+            jitterType = "uniRatio"
+            interpolations = "linear"
+            meanFile = "$dataDir$/CIFAR10_mean.xml"
+        }
+        labels = {
+            labelDim = 10
+        }
+    }    
+}
