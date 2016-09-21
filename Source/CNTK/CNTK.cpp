@@ -245,7 +245,7 @@ void DoCommands(const ConfigParameters& config, const shared_ptr<MPIWrapper>& mp
                 }
                 else if (thisAction == "pbn")
                 {
-                    DoEvalBN<ElemType>(commandParams);
+                    DoPostBatchNormalStat<ElemType>(commandParams);
                 }
                 else if (thisAction == "adapt")
                 {
