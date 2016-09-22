@@ -1,0 +1,10 @@
+#!/bin/bash
+
+. $TEST_DIR/../../run-test-common	# this will download all data sets necessary for testing 
+
+export MKL_NUM_THREADS=4
+export MKL_CBWR=COMPATIBLE
+export OMP_NUM_THREADS=1
+
+ConfigDir=$TEST_DIR/../../../../../../Examples/Image/GettingStarted
+
