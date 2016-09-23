@@ -18,10 +18,10 @@ ResNetBottleneckInc {outChannels, interOutChannels, stride = 2, strideA = 2, str
         Sequential (
             ConvBNReLULayer {interOutChannels, (1: 1), (strideA: strideA)} :
             ConvBNReLULayer {interOutChannels, (3: 3), (strideB: strideB)} :
-            ConvBNReLULayer {outChannels, (1: 1), (1: 1)}
+            ConvBNLayer {outChannels, (1: 1), (1: 1)}
         ) :
         # Shortcut
-        ConvBNReLULayer {outChannels, (1: 1), (stride: stride)},
+        ConvBNLayer {outChannels, (1: 1), (stride: stride)},
         # Plus
         SumElements
     ) :
@@ -34,7 +34,7 @@ ResNetBottleneck {outChannels, interOutChannels} = Sequential(
         Sequential (
             ConvBNReLULayer {interOutChannels, (1: 1), (1: 1)} :
             ConvBNReLULayer {interOutChannels, (3: 3), (1: 1)} :
-            ConvBNReLULayer {outChannels, (1: 1), (1: 1)}
+            ConvBNLayer {outChannels, (1: 1), (1: 1)}
         ) :
         # Shortcut
         Identity,
