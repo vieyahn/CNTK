@@ -1,7 +1,7 @@
 # Node: This ResNet-50 sample uses the BrainScriptBuilder
 #
 
-command = train:pbn:createEval:test
+command = train:pbn:test
 
 precision = "float"; traceLevel = 1 ; deviceId = "auto"
 
@@ -25,7 +25,7 @@ train = {
 
         cMap = 64: 128: 256: 512: 1024: 2048
 
-        model (features) = Sequential(
+        model = Sequential(
             # conv1 and max pooling
             ConvBNReLULayer {cMap[0], (7: 7), (2: 2)} :
             MaxPoolingLayer {(3: 3), stride = 2, pad = true} :
@@ -69,14 +69,15 @@ train = {
         ol = model (features)
 
         # loss and error computation
-        ce = CrossEntropyWithSoftmax (labels, ol)
-        errs = ClassificationError (labels, ol)
+        ce      = CrossEntropyWithSoftmax (labels, ol)
+        errs    = ClassificationError (labels, ol)
+        errs5   = ClassificationError(labels, ol, topN = 5)
 
         # declare special nodes
         featureNodes    = (features)
         labelNodes      = (labels)
         criterionNodes  = (ce)
-        evaluationNodes = (errs)
+        evaluationNodes = (errs: errs5)
         outputNodes     = (ol)
     }
 
@@ -168,16 +169,9 @@ pbn={
     }
 }
 
-createEval={   
-    action="edit"
-    CurModel="$modelPath$.PBN"
-    NewModel="$modelPath$.Eval"
-    editPath="$ConfigDir$/CreateBSEvalModel.mel"
-}
-
 test={
     action="test"
-    modelPath="$modelPath$.Eval"
+    modelPath="$modelPath$.PBN"
     # Set minibatch size for testing.
     minibatchSize=100
 

@@ -1,7 +1,7 @@
 # assembly components
 ## Convolution + Batch Normalization
 ConvBNLayer {outChannels, kernel, stride} = Sequential(
-    ConvolutionalLayer {outChannels, kernelSize, init = "heNormal", stride = strideSize, pad = true, bias = false} :
+    ConvolutionalLayer {outChannels, kernel, init = "heNormal", stride = stride, pad = true, bias = false} :
     BatchNormalizationLayer {spatialRank = 2, normalizationTimeConstant = 0, useCntkEngine = false}
 )
 
@@ -23,7 +23,7 @@ ResNetBottleneckInc {outChannels, interOutChannels, stride = 2, strideA = 2, str
         # Shortcut
         ConvBNLayer {outChannels, (1: 1), (stride: stride)},
         # Plus
-        SumElements
+        PlusA
     ) :
     ReLU
 )
@@ -39,7 +39,7 @@ ResNetBottleneck {outChannels, interOutChannels} = Sequential(
         # Shortcut
         Identity,
         # Plus
-        SumElements
+        PlusA
     ) :
     ReLU
 )
